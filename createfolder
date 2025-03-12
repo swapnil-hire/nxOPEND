@@ -1,0 +1,55 @@
+Imports System.IO
+
+Public Class Form1
+    ' Store selected file path here
+    Dim selectedFilePath As String = ""
+
+    ' Browse file button
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        Dim openFileDialog As New OpenFileDialog()
+
+        If openFileDialog.ShowDialog() = DialogResult.OK Then
+            selectedFilePath = openFileDialog.FileName
+            MessageBox.Show("Selected File: " & selectedFilePath)
+        End If
+    End Sub
+
+    ' Rename and Move button
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+        If String.IsNullOrEmpty(selectedFilePath) Then
+            MessageBox.Show("Please select a file first!")
+            Return
+        End If
+
+        Dim newFileName As String = TextBox1.Text.Trim()
+        Dim destinationFolder As String = TextBox2.Text.Trim()
+
+        If String.IsNullOrEmpty(newFileName) Or String.IsNullOrEmpty(destinationFolder) Then
+            MessageBox.Show("Please enter both New File Name and Destination Folder.")
+            Return
+        End If
+
+        ' Get the file extension
+        Dim fileExtension As String = Path.GetExtension(selectedFilePath)
+
+        ' Build the new file path
+        Dim newFilePath As String = Path.Combine(destinationFolder, newFileName & fileExtension)
+
+        Try
+            ' Ensure the destination directory exists
+            If Not Directory.Exists(destinationFolder) Then
+                Directory.CreateDirectory(destinationFolder)
+            End If
+
+            ' Move and rename the file
+            File.Move(selectedFilePath, newFilePath)
+
+            MessageBox.Show("File moved and renamed successfully!" & vbCrLf & "New Path: " & newFilePath)
+
+            ' Clear the path so user selects another if needed
+            selectedFilePath = ""
+        Catch ex As Exception
+            MessageBox.Show("Error: " & ex.Message)
+        End Try
+    End Sub
+End Class
