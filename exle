@@ -1,0 +1,31 @@
+Imports System
+Imports NXOpen
+Imports System.Windows.Forms
+
+Module NXJournal
+
+    Sub Main(ByVal args() As String)
+        Dim theSession As Session = Session.GetSession()
+        Dim workPart As Part = theSession.Parts.Work()
+        Dim pnt As Point3d
+        Dim newPoint As Point
+        Dim X, Y, Z As Double
+        Dim EXCEL = CreateObject("Excel.Application")
+        EXCEL.Visible = False ' Set to False for script execution
+        EXCEL.Workbooks.Open("C:\Siemens NX\KBE\Points.xlsx") ' Replace with your Excel file path
+        Dim ExcelSheet As Object = EXCEL.Worksheets(1) ' Assuming points are in the first sheet
+        Dim rowCount As Integer = ExcelSheet.UsedRange.Rows.Count
+        Dim colCount As Integer = ExcelSheet.UsedRange.Columns.Count
+        Dim i As Integer
+
+        For i = 1 To rowCount
+            X = ExcelSheet.Cells(i, 1).Value ' Assuming X is in the first column
+            Y = ExcelSheet.Cells(i, 2).Value ' Assuming Y is in the second column
+            Z = ExcelSheet.Cells(i, 3).Value ' Assuming Z is in the third column
+            pnt = New Point3d(X, Y, Z)
+            newPoint = workPart.Points.Create(pnt)
+        Next i
+        EXCEL.Workbooks(1).Close()
+        EXCEL.Quit()
+    End Sub
+End Module
