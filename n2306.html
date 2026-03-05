@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NX Drawing Template Automation – Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; padding: 28px 24px; }
+
+  h1 { text-align: center; font-size: 20px; font-weight: 700; letter-spacing: 1.5px;
+       color: #fff; margin-bottom: 4px; text-transform: uppercase; }
+  .subtitle { text-align: center; font-size: 12px; color: #64748b; margin-bottom: 30px; letter-spacing: 0.5px; }
+
+  /* ── GRID LAYOUT ── */
+  .arch { display: grid; grid-template-columns: 200px 1fr 200px; grid-template-rows: auto auto auto; gap: 20px; max-width: 1080px; margin: 0 auto; }
+
+  /* ── CARD BASE ── */
+  .card { border-radius: 10px; padding: 16px 14px; border: 1px solid; position: relative; }
+  .card-title { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px; }
+  .item { font-size: 11px; line-height: 1.9; padding-left: 12px; position: relative; color: #cbd5e1; }
+  .item::before { content: "▸"; position: absolute; left: 0; font-size: 9px; }
+
+  /* ── COLOUR THEMES ── */
+  .blue   { background: #0d1f3c; border-color: #2563eb; }
+  .blue   .card-title { color: #60a5fa; }
+  .green  { background: #0d2318; border-color: #16a34a; }
+  .green  .card-title { color: #4ade80; }
+  .amber  { background: #1c1407; border-color: #d97706; }
+  .amber  .card-title { color: #fbbf24; }
+  .purple { background: #170d2e; border-color: #7c3aed; }
+  .purple .card-title { color: #a78bfa; }
+  .teal   { background: #061c1c; border-color: #0d9488; }
+  .teal   .card-title { color: #2dd4bf; }
+  .rose   { background: #1c060e; border-color: #e11d48; }
+  .rose   .card-title { color: #fb7185; }
+  .slate  { background: #111827; border-color: #475569; }
+  .slate  .card-title { color: #94a3b8; }
+
+  /* ── CENTRE MAIN BLOCK ── */
+  .main-block { grid-column: 2; grid-row: 1 / 4; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── MAIN JOURNAL BOX ── */
+  .journal { background: linear-gradient(135deg, #0d1f3c 0%, #0f2a4a 100%);
+             border: 2px solid #3b82f6; border-radius: 14px; padding: 18px 18px 14px; }
+  .journal .jt { font-size: 13px; font-weight: 800; color: #93c5fd; letter-spacing: 0.8px;
+                 margin-bottom: 3px; }
+  .journal .jv { font-size: 10px; color: #475569; margin-bottom: 14px; }
+
+  .fn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fn { background: #0a1628; border: 1px solid #1e3a5f; border-radius: 8px; padding: 10px 12px; }
+  .fn-name { font-size: 11px; font-weight: 700; color: #60a5fa; font-family: 'Courier New', monospace; margin-bottom: 5px; }
+  .fn-desc { font-size: 10px; color: #64748b; line-height: 1.5; }
+  .fn-badge { display: inline-block; font-size: 9px; background: #1e3a5f; color: #93c5fd;
+              border-radius: 3px; padding: 1px 5px; margin-top: 4px; font-family: monospace; }
+  .fn-badge.new { background: #14532d; color: #86efac; }
+  .fn-badge.iso { background: #3b1f6b; color: #c4b5fd; }
+
+  /* ── DATA FLOW ── */
+  .flow { background: #0a0f1a; border: 1px solid #1e293b; border-radius: 10px; padding: 14px; }
+  .flow-title { font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 1px;
+                text-transform: uppercase; margin-bottom: 10px; }
+  .flow-steps { display: flex; align-items: center; gap: 0; }
+  .step { flex: 1; text-align: center; }
+  .step-box { background: #0d1f3c; border: 1px solid #2563eb; border-radius: 6px;
+              padding: 7px 4px; font-size: 10px; color: #93c5fd; font-weight: 600; line-height: 1.3; }
+  .arrow { color: #334155; font-size: 16px; padding: 0 3px; flex-shrink: 0; }
+
+  /* ── LEGEND ── */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+            margin-top: 20px; padding-top: 16px; border-top: 1px solid #1e293b; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #64748b; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ── SIDE LABELS ── */
+  .side-left  { grid-column: 1; display: flex; flex-direction: column; gap: 14px; }
+  .side-right { grid-column: 3; display: flex; flex-direction: column; gap: 14px; }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .badge { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+  .badge-blue   { background: #1e3a5f; color: #93c5fd; }
+  .badge-green  { background: #14532d; color: #86efac; }
+  .badge-amber  { background: #451a03; color: #fbbf24; }
+  .badge-purple { background: #2e1065; color: #c4b5fd; }
+
+  /* ── CONNECTOR LINES (pseudo) ── */
+  .connector { width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #1e3a5f, transparent);
+               margin: 4px 0; border-radius: 2px; }
+
+  /* ── TITLE STRIP ── */
+  .title-strip { grid-column: 1 / -1; background: linear-gradient(90deg, #0d1f3c, #170d2e, #0d1f3c);
+                 border-radius: 10px; padding: 14px 20px; display: flex; align-items: center;
+                 justify-content: space-between; border: 1px solid #1e293b; }
+  .ts-left { }
+  .ts-title { font-size: 14px; font-weight: 800; color: #fff; }
+  .ts-sub { font-size: 10px; color: #475569; margin-top: 2px; }
+  .ts-badges { display: flex; gap: 8px; }
+  .ts-badge { font-size: 10px; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+
+  /* ── ISO ZONE BOX ── */
+  .zone-demo { background: #0a0f1a; border: 1px solid #7c3aed; border-radius: 8px;
+               padding: 10px; margin-top: 10px; }
+  .zone-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 2px; margin-top: 6px; }
+  .zone-cell { background: #170d2e; border: 1px solid #2e1065; border-radius: 3px;
+               text-align: center; padding: 4px 2px; font-size: 9px; font-family: monospace; color: #c4b5fd; }
+  .zone-cell.header { background: #2e1065; color: #e9d5ff; font-weight: 700; }
+  .zone-cell.corner { background: #0a0a12; color: #334155; }
+
+  /* smart mapping highlight */
+  .highlight-box { background: #0d2318; border: 1px solid #16a34a; border-radius: 6px;
+                   padding: 8px 10px; margin-top: 8px; font-size: 10px; color: #86efac; line-height: 1.7; }
+  .hl-title { font-weight: 700; font-size: 10px; color: #4ade80; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<h1>NX Drawing Template Automation</h1>
+<p class="subtitle">NXOpen Python v3.0  ·  NX2306  ·  ISO 7200 / ISO 5457  ·  Teamcenter Managed Mode</p>
+
+<div class="arch">
+
+  <!-- ══ TITLE STRIP ══ -->
+  <div class="title-strip">
+    <div class="ts-left">
+      <div class="ts-title">nx_drawing_template_v3.py</div>
+      <div class="ts-sub">Entry point: main() → create_sheet() → create_grid() → update_title_block()</div>
+    </div>
+    <div class="ts-badges">
+      <span class="ts-badge" style="background:#0d1f3c;color:#60a5fa;border:1px solid #2563eb">NX2306</span>
+      <span class="ts-badge" style="background:#0d2318;color:#4ade80;border:1px solid #16a34a">ISO 7200</span>
+      <span class="ts-badge" style="background:#170d2e;color:#a78bfa;border:1px solid #7c3aed">Smart TC</span>
+      <span class="ts-badge" style="background:#1c1407;color:#fbbf24;border:1px solid #d97706">Idempotent</span>
+    </div>
+  </div>
+
+  <!-- ══ LEFT COLUMN ══ -->
+  <div class="side-left">
+
+    <div class="card blue">
+      <div class="card-title">🗂 NX Session</div>
+      <div class="item">NXOpen.Session.GetSession()</div>
+      <div class="item">Parts.Work validation</div>
+      <div class="item">Single undo mark</div>
+      <div class="item">Listing window log</div>
+      <div class="badge-row">
+        <span class="badge badge-blue">Managed</span>
+        <span class="badge badge-blue">Unmanaged</span>
+      </div>
+    </div>
+
+    <div class="card amber">
+      <div class="card-title">📐 ISO Sheet Sizes</div>
+      <div class="item">A0  1189 × 841 mm</div>
+      <div class="item">A1   841 × 594 mm</div>
+      <div class="item">A2   594 × 420 mm</div>
+      <div class="item">A3   420 × 297 mm</div>
+      <div class="item">A4   297 × 210 mm</div>
+      <div class="badge-row">
+        <span class="badge badge-amber">ISO 5457</span>
+      </div>
+    </div>
+
+    <div class="card teal">
+      <div class="card-title">🔧 Layer Control</div>
+      <div class="item">Layer 200 – Template</div>
+      <div class="item">UF Layer.SetWorkLayer()</div>
+      <div class="item">Layers.SetState()</div>
+      <div class="item">Selective visibility</div>
+    </div>
+
+  </div>
+
+  <!-- ══ CENTRE MAIN BLOCK ══ -->
+  <div class="main-block">
+
+    <!-- FUNCTION CARDS -->
+    <div class="journal">
+      <div class="jt">Core Functions</div>
+      <div class="jv">All functions are idempotent — safe to re-run without side effects</div>
+      <div class="fn-grid">
+
+        <div class="fn">
+          <div class="fn-name">create_sheet()</div>
+          <div class="fn-desc">Detects existing sheet by name · Updates via DrawingSheetBuilder · Sets FirstAngle projection · Activates sheet</div>
+          <div class="fn-badge">DrawingSheet.Null fix</div>
+        </div>
+
+        <div class="fn">
+          <div class="fn-name">create_grid()</div>
+          <div class="fn-desc">Calculates grid from sheet size · Draws 2D drafting lines · Labels per ISO 7200 · Centre marks per ISO 5457</div>
+          <div class="fn-badge iso">ISO 7200 §6</div>
+        </div>
+
+        <div class="fn">
+          <div class="fn-name">update_title_block()</div>
+          <div class="fn-desc">Smart TC attribute mapping · Find-by-UF-tag pattern · Builder-based text update · 8-field ISO layout</div>
+          <div class="fn-badge new">NEW v3 Smart Map</div>
+        </div>
+
+        <div class="fn">
+          <div class="fn-name">get_tc_attributes()</div>
+          <div class="fn-desc">IsPartManaged() check · AskWorkPartItem() · Multi-candidate attr search · Graceful "-" fallback</div>
+          <div class="fn-badge">UFSession</div>
+        </div>
+
+        <div class="fn">
+          <div class="fn-name">get_zone_ref()</div>
+          <div class="fn-desc">Returns ISO zone string e.g. "B3" · Col right→left · Row bottom→top · Supports >26 rows (AA, AB…)</div>
+          <div class="fn-badge iso">NEW ISO 7200</div>
+        </div>
+
+        <div class="fn">
+          <div class="fn-name">_get_or_build_note()</div>
+          <div class="fn-desc">Locate note by UF tag attr · Update via builder · Create if absent · Position-independent</div>
+          <div class="fn-badge new">NEW Smart Core</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DATA FLOW -->
+    <div class="flow">
+      <div class="flow-title">⚡ Execution Flow</div>
+      <div class="flow-steps">
+        <div class="step"><div class="step-box">Validate<br>Session</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="step-box">Create /<br>Update Sheet</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="step-box">Delete Old<br>Grid Objects</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="step-box">Draw ISO<br>Grid Lines</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="step-box">Place Zone<br>Labels</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="step-box">Fetch TC<br>Attributes</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="step-box">Smart<br>Title Block</div></div>
+      </div>
+    </div>
+
+    <!-- SMART MAPPING EXPLAINER -->
+    <div class="card green">
+      <div class="card-title">🔷 Smart Title Block Mapping — How It Works</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+        <div class="highlight-box">
+          <div class="hl-title">First Run (Create)</div>
+          1. Note not found by tag<br>
+          2. _place_label() creates note<br>
+          3. UF.Attr writes NX_TB_FIELD<br>
+             = "TB_ITEM_ID" on the note<br>
+          4. Note anchored at (x, y)
+        </div>
+        <div class="highlight-box">
+          <div class="hl-title">Re-run (Update)</div>
+          1. _find_note_by_tag() scans<br>
+             Annotations for NX_TB_FIELD<br>
+          2. Found → CreateDraftingNoteBuilder<br>
+             (existing note)<br>
+          3. SetText() → Commit()<br>
+          4. Position <strong>unchanged</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ RIGHT COLUMN ══ -->
+  <div class="side-right">
+
+    <div class="card purple">
+      <div class="card-title">🌐 Teamcenter Integration</div>
+      <div class="item">UFPdm.IsPartManaged()</div>
+      <div class="item">AskWorkPartItem()</div>
+      <div class="item">AskStringAttr()</div>
+      <div class="item">Multi-candidate fallback</div>
+      <div class="badge-row">
+        <span class="badge badge-purple">item_id</span>
+        <span class="badge badge-purple">revision</span>
+        <span class="badge badge-purple">material</span>
+        <span class="badge badge-purple">approver</span>
+      </div>
+    </div>
+
+    <div class="card purple" style="border-color:#5b21b6">
+      <div class="card-title">🗺 ISO 7200 Zones</div>
+      <div class="zone-demo">
+        <div style="font-size:9px;color:#7c3aed;margin-bottom:4px">get_zone_ref() output →</div>
+        <div class="zone-grid">
+          <div class="zone-cell corner"></div>
+          <div class="zone-cell header">5</div>
+          <div class="zone-cell header">4</div>
+          <div class="zone-cell header">3</div>
+          <div class="zone-cell header">2</div>
+
+          <div class="zone-cell header">C</div>
+          <div class="zone-cell">C5</div>
+          <div class="zone-cell">C4</div>
+          <div class="zone-cell">C3</div>
+          <div class="zone-cell">C2</div>
+
+          <div class="zone-cell header">B</div>
+          <div class="zone-cell">B5</div>
+          <div class="zone-cell">B4</div>
+          <div class="zone-cell">B3</div>
+          <div class="zone-cell">B2</div>
+
+          <div class="zone-cell header">A</div>
+          <div class="zone-cell">A5</div>
+          <div class="zone-cell">A4</div>
+          <div class="zone-cell">A3</div>
+          <div class="zone-cell">A2</div>
+        </div>
+        <div style="font-size:9px;color:#475569;margin-top:5px">↑ Bottom=A · Right=1</div>
+      </div>
+    </div>
+
+    <div class="card rose">
+      <div class="card-title">⚠ NX2306 Fixes Applied</div>
+      <div class="item">DraftingCurves.CreateLine</div>
+      <div class="item">DrawingSheet.Null arg</div>
+      <div class="item">work_part.DeleteObjects()</div>
+      <div class="item">Builder text update</div>
+      <div class="item">UF Layer.SetWorkLayer()</div>
+      <div class="item">Annotations iteration</div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:#2563eb"></div>NX Session / Sheet</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#16a34a"></div>Smart Mapping (New v3)</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#7c3aed"></div>ISO 7200 Zone Standard</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#d97706"></div>ISO 5457 Sheet Sizes</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#0d9488"></div>Layer / UF Utilities</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#e11d48"></div>NX2306 Compatibility Fixes</div>
+</div>
+
+</body>
+</html>
