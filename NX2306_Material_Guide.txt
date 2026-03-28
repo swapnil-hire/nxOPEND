@@ -1,0 +1,288 @@
+# NX 2306 - Get Material from Section View
+## VB Code Implementation Guide
+
+---
+
+## Overview
+This code retrieves material information for all components visible in section views of NX drawings, optimized for NX 2306.
+
+---
+
+## NX 2306 Specific Features
+
+### 1. **Updated Namespaces**
+- `Imports NXOpen.Drawings` - New in recent NX versions for better drawing support
+- `Imports NXOpen.Assemblies` - For component assembly access
+- Fully compatible with NX 2306 API
+
+### 2. **DrawingSheet and DrawingSheetView**
+In NX 2306:
+```vb
+Dim drawingPart As DrawingSheet = TryCast(workPart, DrawingSheet)
+Dim sectionViews As DrawingSheetView = drawingPart.DrawingViews
+```
+
+### 3. **Component Visibility Check**
+```vb
+If comp.Visible Then
+    visibleComponents.Add(comp)
+End If
+```
+
+### 4. **Material Attribute Handling**
+NX 2306 supports multiple attribute types:
+- **StringAttribute** - For text material names
+- **IntegerAttribute** - For material codes/IDs
+- **RealAttribute** - For material properties (density, etc.)
+
+---
+
+## How Material is Typically Stored in NX
+
+### Option A: Part Attributes (Most Common)
+Material is stored as a custom attribute on the part:
+```
+Part > Properties > Attributes > Material = "Steel"
+```
+
+### Option B: User-Defined Attributes
+```
+Right-click Part > Properties > Custom User Attributes > Material = "Aluminum"
+```
+
+### Option C: Part Description
+```
+Part Name: "Bracket_Steel_v01"
+Description: "Bracket component made from Steel"
+```
+
+### Option D: Mass Properties Database
+```
+Density = 7850 kg/m³ (Steel)
+Density = 2700 kg/m³ (Aluminum)
+```
+
+---
+
+## Key Code Functions
+
+### 1. **ProcessSectionView()**
+- Identifies section views in the drawing
+- Gets the source view (main view being sectioned)
+- Retrieves the origin model (assembly)
+- Collects all visible components
+
+### 2. **GetVisibleComponentsInSection()**
+- Recursively traverses component assembly tree
+- Filters for visible components
+- Returns list of Component objects
+
+### 3. **ExtractComponentMaterial()**
+- Calls 4 different methods to find material
+- Tries attributes, user attributes, description, and mass properties
+- Handles errors gracefully
+
+### 4. **Material Extraction Methods**
+1. `GetMaterialFromAttributes()` - Standard NX attributes
+2. `GetMaterialFromUserAttributes()` - Custom user attributes
+3. `GetMaterialFromDescription()` - Part name/description analysis
+4. `GetMaterialFromMassProperties()` - Density-based lookup
+
+---
+
+## Usage Instructions
+
+### Step 1: Prepare Your Drawing
+1. Open your NX 2306 drawing with section views
+2. Ensure components have material attributes defined
+
+### Step 2: Run the Macro
+1. Tools > Macro > Edit/Run
+2. Paste the code or open the file
+3. Click "Run"
+4. Check Listing Window for results
+
+### Step 3: Review Output
+The Listing Window will show:
+```
+===== NX 2306 - Get Material from Section View =====
+
+Drawing Part: MyDrawing
+
+Section Views Found: 2
+
+========================================
+Section View: Section A-A
+Label: A-A
+========================================
+Source View: Front View
+Origin Model: AssemblyName
+
+Visible Components: 5
+
+Component: Bracket_01
+  Type: Part
+  Reference Set: Entire Part
+  Part Name: Bracket
+  Material (Attribute): Steel
+  
+Component: Fastener_01
+  Type: Part
+  Reference Set: Entire Part
+  Part Name: Fastener
+  Material (User Attr): Stainless Steel
+
+[... more components ...]
+
+===== Process Complete =====
+```
+
+---
+
+## Customization Options
+
+### Option 1: Add Your Material Attribute Names
+Modify the materialAttrs array in `GetMaterialFromAttributes()`:
+
+```vb
+Dim materialAttrs As String() = {
+    "Material",
+    "MATERIAL", 
+    "YourCustomAttribute",  ' Add your custom names here
+    "MaterialCode"
+}
+```
+
+### Option 2: Export Results to CSV
+Add this function to save results:
+
+```vb
+Sub ExportToCSV(filePath As String)
+    ' Implementation here
+End Sub
+```
+
+### Option 3: Filter Specific Material Types
+Modify `ExtractComponentMaterial()` to filter:
+
+```vb
+If material.Contains("Steel") Or material.Contains("Aluminum") Then
+    ' Process only specific materials
+End If
+```
+
+### Option 4: Link to Material Database
+```vb
+Function GetMaterialFromDatabase(materialCode As String) As String
+    ' Connect to your material database
+    ' Return complete material properties
+End Function
+```
+
+---
+
+## Troubleshooting
+
+### Issue: "No components visible in this section"
+- **Cause**: Components might not have visibility flag set
+- **Fix**: Uncomment/modify the visibility filter in `GetVisibleComponentsInSection()`
+
+### Issue: "Material: Not found"
+- **Cause**: Material not stored as expected
+- **Fix**: Check where your system stores material data
+- **Solution**: Add custom attribute search in materialAttrs array
+
+### Issue: "No origin model found"
+- **Cause**: Section view not properly linked to source view
+- **Fix**: Verify section view is created from main view correctly
+
+### Issue: Drawing is not recognized
+- **Cause**: Active part is not a drawing
+- **Fix**: Make sure you have a drawing open, not just a part file
+
+---
+
+## NX 2306 API References
+
+### Common Classes
+- `DrawingSheet` - Drawing document
+- `DrawingSheetView` - View in drawing
+- `Component` - Assembly component
+- `ComponentAssembly` - Assembly container
+- `AttributeContainer` - For getting/setting attributes
+
+### Useful Properties
+```vb
+component.Name                ' Component name in assembly
+component.Prototype.OwningPart ' The actual part file
+component.Visible             ' Is component visible?
+component.IsSuppressed        ' Is component suppressed?
+component.ReferenceSet        ' Reference set used
+```
+
+---
+
+## Best Practices
+
+1. **Always check for null references**
+   ```vb
+   If component IsNot Nothing Then
+       ' Process component
+   End If
+   ```
+
+2. **Use Try-Catch blocks**
+   - Prevents macro crash on errors
+   - Allows graceful error handling
+
+3. **Open Listing Window early**
+   ```vb
+   lw.Open()
+   ```
+
+4. **Test with small assembly first**
+   - Verify material attribute names
+   - Check if components are visible
+
+5. **Keep detailed logging**
+   - Helps identify data storage issues
+   - Useful for debugging
+
+---
+
+## Performance Considerations
+
+- **Large Assemblies**: May take longer to process
+- **Recursive Traversal**: Component tree can be deep
+- **Attribute Lookup**: Searching multiple attribute names
+- **Optimization**: Comment out unused GetMaterial methods if needed
+
+---
+
+## Future Enhancements
+
+1. Export results to Excel using interop
+2. Create material summary report
+3. Validate materials against standards
+4. Generate BOM with material info
+5. Integration with PLM/ERP systems
+
+---
+
+## Support & Tips
+
+- Always save your work before running macros
+- Use Ctrl+J to open Listing Window
+- Use Ctrl+Alt+D to show/hide macros
+- Test on a copy of your drawing first
+- Keep backup of your macro code
+
+---
+
+## Version Info
+- **NX Version**: 2306
+- **Language**: VB.NET
+- **Last Updated**: 2024
+- **Compatible**: NX 2306 and later
+
+---
